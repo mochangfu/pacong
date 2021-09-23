@@ -7,6 +7,5 @@ import java.util.List;
 @Mapper
 public interface DeviceCommonNameDao {
     List<String> findNames();
-    void update1();
-    void getOne();
+
 }

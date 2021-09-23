@@ -74,7 +74,7 @@ public class BaikeItemYiliaoCrawServiceImpl  {
         if (!savePath.endsWith("/")) {
             savePath = savePath + "/";
         }
-        deviceCommonNameDao.getOne();
+
         List<String> items = deviceCommonNameDao.findNames();
 
         String time = DateFormatUtils.format(new Date(), "yyyyMMddHHmmssSSS");
