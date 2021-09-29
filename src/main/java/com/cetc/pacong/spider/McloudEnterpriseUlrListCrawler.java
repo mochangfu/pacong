@@ -20,7 +20,7 @@ public class McloudEnterpriseUlrListCrawler implements PageProcessor {
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
     private Site site = Site.me().setRetryTimes(3).setSleepTime(2000).setTimeOut(10000);
-    String detail_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getBaseEnterpriseDetails?";//  # 工商信息
+    String detail_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getBaseEnterpriseDetails";//  # 工商信息
    // String detail_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getBaseEnterpriseDetails";
     @Override
     public void process(Page page) {

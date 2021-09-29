@@ -36,8 +36,8 @@ public class McloudEnterpriseResolver implements PageProcessor {
 
 
     private Site site = Site.me().setRetryTimes(3).setSleepTime(2000).setTimeOut(10000);
-    private String permit_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getPermitInfoDetails?"  ;  // 许可信息
-    private String filing_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getFilingInfoDetails?" ;  // 备案信息
+    private String permit_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getPermitInfoDetails"  ;  // 许可信息
+    private String filing_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getFilingInfoDetails" ;  // 备案信息
 
     @Override
     public void process(Page page) {
@@ -60,14 +60,15 @@ public class McloudEnterpriseResolver implements PageProcessor {
             connection.headers(map);
             Document rootdocument =connection.ignoreContentType(true).get();
             JSONObject jsonObject1 = JSON.parseObject(rootdocument.body().text());
-            en.setLicenseNum(jsonObject0.getString("licenseNum"));
+            en.setLicenseNum(jsonObject1.getString("licenseNum"));
 
+            url_0 = filing_url +"?"+ urlencode(map);
             connection= Jsoup.connect(url_0).ignoreContentType(true);
             System.out.println(url_0);
             connection.headers(map);
             rootdocument =connection.ignoreContentType(true).get();
             JSONObject jsonObject2 = JSON.parseObject(rootdocument.body().text());
-            en.setRecordNum(jsonObject0.getString("recordNum"));
+            en.setRecordNum(jsonObject2.getString("recordNum"));
         }catch (Exception e){
             logger.info("爬取工商企业信息错误",e.getMessage(),e);
         }
