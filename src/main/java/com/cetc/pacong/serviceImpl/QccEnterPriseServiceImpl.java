@@ -1,13 +1,11 @@
 package com.cetc.pacong.serviceImpl;
 
 import com.cetc.pacong.downloader.CustomHttpClientDownloader;
-import com.cetc.pacong.listener.ResolverListener;
-import com.cetc.pacong.pipeline.News2TxtQianlunPipeline;
+
+import com.cetc.pacong.pipeline.QccPipeline;
 import com.cetc.pacong.serviceImpl.service.ICrawService;
-import com.cetc.pacong.spider.QianlunCrawler;
-import com.cetc.pacong.spider.QianlunResolver;
-import com.cetc.pacong.utils.KeySetSingleton;
-import com.google.common.collect.Lists;
+import com.cetc.pacong.spider.QccResolver;
+import com.cetc.pacong.spider.QianlunUrlListCrawler;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
@@ -35,19 +33,33 @@ public class QccEnterPriseServiceImpl implements ICrawService {
     String userAgent ="";
     String cookies ="";
     String base_url = "https://www.qcc.com/web/search?key=";
-    public List<Request> getUr() {
+    public void getUr() {
+        List<String> nameList=Arrays.asList(   "三诺生物传感股份有限公司");
         List<Request> list = new ArrayList<>();
-        String url=base_url+"三诺生物传感股份有限公司";
+        for (String name : nameList) {
+            String url=base_url+name;
             Request request = new Request(url);
             request.setMethod("get");
             request.addHeader("User-Agent", userAgent);
             request.addHeader("Cookie", cookies);
-            list.add(request);
-        return list;
+            scheduler1.push(request,spiderResolver);
+        }
+
+        return ;
     }
 
     public static void main(String[] args) throws Exception {
-        new QccEnterPriseServiceImpl().crawl1("D:/yiliaoPacongData/qcc/");
+        String savePath = "D:/yiliaoPacongData/qcc/";
+        String time = DateFormatUtils.format(new Date(), "yyyyMMddHHmmssSSS");
+        savePath = savePath + "qcc_" + time + "/";
+        File fileTxt = new File(savePath + "txt/");
+        File fileimage = new File(savePath + "image/");
+        //如果文件夹不存在则创建
+        if (!fileTxt.exists() && !fileTxt.isDirectory()) {
+            fileTxt.mkdirs();
+            fileimage.mkdirs();
+        }
+        new QccEnterPriseServiceImpl().crawl1(savePath);
     }
 
 
@@ -56,16 +68,24 @@ public class QccEnterPriseServiceImpl implements ICrawService {
 
     }
 
-
+    private Scheduler scheduler1 = new QueueScheduler();
     public void crawl1(String savePath) throws Exception {
-
-        spiderResolver = Spider.create(new QianlunCrawler())
-                .addRequest(getUr().toArray(new Request[1]))
+        spiderResolver = Spider.create(new QccResolver())
+             /*   .addRequest(getUr().toArray(new Request[1]))*/
+                .setScheduler(scheduler1)
                 .setDownloader(new CustomHttpClientDownloader())
                 .setExitWhenComplete(true)
-                .addPipeline (new News2TxtQianlunPipeline(savePath, "crawled_data.txt"))
+                //.setEmptySleepTime(2000)
+                .addPipeline (new QccPipeline(savePath, "crawled_data.txt"))
                 .thread(1);
         try {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    getUr();
+                }
+            }).start();
+            Thread.currentThread().sleep(5000);
             spiderResolver.runAsync();
             Thread.currentThread().sleep(1000);
         } catch (Exception e) {

@@ -4,13 +4,11 @@ import com.alibaba.druid.support.json.JSONUtils;
 import com.cetc.pacong.dao.DeviceCommonNameDao;
 import com.cetc.pacong.downloader.CustomHttpClientDownloader;
 import com.cetc.pacong.listener.ResolverListener;
-import com.cetc.pacong.pipeline.BaiduBaikeItem2TxtPipeline;
 
-import com.cetc.pacong.spider.BaiduBaikeItemByKeyYiliaoDetailResolver;
-import com.cetc.pacong.utils.FileUtil;
+import com.cetc.pacong.pipeline.BaiduYiliaoItem2TxtPipeline;
+import com.cetc.pacong.spider.BaiduBaikeItemYiliaoResolver;
 import com.cetc.pacong.utils.KeySetSingleton;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,10 +43,10 @@ public class BaikeItemYiliaoCrawServiceImpl  {
     }
 
     public void baikeItemByKeyInit(List<String> items, String savePath) {
-        spider = Spider.create(new BaiduBaikeItemByKeyYiliaoDetailResolver())
+        spider = Spider.create(new BaiduBaikeItemYiliaoResolver())
                 .setDownloader(new CustomHttpClientDownloader())
                 .setExitWhenComplete(false)
-                .addPipeline(new BaiduBaikeItem2TxtPipeline(savePath, "crawled_data.txt"))
+                .addPipeline(new BaiduYiliaoItem2TxtPipeline(savePath, "crawled_data.txt"))
                 .setSpiderListeners(Lists.newArrayList(new ResolverListener(savePath, "crawl_failed_url.txt", "crawl_succ_url.txt")))
                 .addUrl(getUrls(items))
                 .setExitWhenComplete(true)
@@ -75,8 +73,8 @@ public class BaikeItemYiliaoCrawServiceImpl  {
             savePath = savePath + "/";
         }
 
-        List<String> items = deviceCommonNameDao.findNames();
-
+       List<String> items = deviceCommonNameDao.findNames().subList(0,100);
+        //List<String> items = Arrays.asList("奥巴马");
         String time = DateFormatUtils.format(new Date(), "yyyyMMddHHmmssSSS");
         String basePath = savePath;
         savePath = basePath + "baikeItem_" + time + "/";

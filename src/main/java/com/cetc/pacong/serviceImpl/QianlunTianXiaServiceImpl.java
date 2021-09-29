@@ -1,7 +1,8 @@
 package com.cetc.pacong.serviceImpl;
 
 import com.cetc.pacong.serviceImpl.service.ICrawService;
-import com.cetc.pacong.spider.QianlunCrawler;
+
+import com.cetc.pacong.spider.QianlunUrlListCrawler;
 import com.cetc.pacong.listener.ResolverListener;
 import com.cetc.pacong.pipeline.News2TxtQianlunPipeline;
 import com.cetc.pacong.downloader.CustomHttpClientDownloader;
@@ -57,7 +58,7 @@ public class QianlunTianXiaServiceImpl implements ICrawService {
     public void init(String word, String savePath, String cookie) {
 
 
-        spiderResolver = Spider.create(new QianlunCrawler())
+        spiderResolver = Spider.create(new QianlunUrlListCrawler())
                 .addRequest(getUr(cookie, word).toArray(new Request[1]))
                 .setDownloader(new CustomHttpClientDownloader())
                 .setExitWhenComplete(true)

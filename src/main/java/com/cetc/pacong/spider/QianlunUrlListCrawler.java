@@ -17,7 +17,7 @@ import java.util.List;
 /**
  *
  */
-public class QianlunCrawler implements PageProcessor {
+public class QianlunUrlListCrawler implements PageProcessor {
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 

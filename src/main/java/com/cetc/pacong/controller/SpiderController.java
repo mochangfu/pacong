@@ -5,6 +5,7 @@ import com.cetc.pacong.beans.CrawlerRequest;
 import com.cetc.pacong.beans.Response;
 import com.cetc.pacong.serviceImpl.BaikeItemCrawServiceImpl;
 import com.cetc.pacong.serviceImpl.BaikeItemYiliaoCrawServiceImpl;
+import com.cetc.pacong.serviceImpl.McloudProductCrawServiceImpl;
 import com.cetc.pacong.serviceImpl.QianlunTianXiaServiceImpl;
 
 import org.slf4j.Logger;
@@ -24,6 +25,8 @@ public class SpiderController {
     private BaikeItemCrawServiceImpl baikeItemCrawService;
     @Autowired
     private BaikeItemYiliaoCrawServiceImpl baikeItemYiliaoCrawService;
+    @Autowired
+    private McloudProductCrawServiceImpl mcloudProductCrawService;
 
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -31,12 +34,19 @@ public class SpiderController {
     @PostMapping("/qianlun/down")
     public String qianlun(@RequestBody CrawlerRequest crawlerRequest) throws Exception {
         logger.info("qianlun controller");
+
         qianlunTianXiaServiceImpl.crawl1(crawlerRequest.getSavePath(), crawlerRequest.getCookie(), crawlerRequest.getParam1());
 
         Response response = new Response();
         response.success();
         return "请等待";
     }
+    @RequestMapping(value = "/baikeItem/collect")
+    public String getItem1(@RequestBody(required = false) Body crawlerRequest) throws Exception {
+        logger.info("baikeItem controller");
+        return baikeItemCrawService.crawl1(crawlerRequest.getItem(), crawlerRequest.getSavePath(), crawlerRequest.getWithChild());
+    }
+
 
     @RequestMapping(value = "/baikeItem")
     public String baikeItem() throws Exception {
@@ -45,10 +55,11 @@ public class SpiderController {
 
     }
 
-    @RequestMapping(value = "/baikeItem/collect")
-    public String getItem1(@RequestBody(required = false) Body crawlerRequest) throws Exception {
-        logger.info("baikeItem controller");
-        return baikeItemCrawService.crawl1(crawlerRequest.getItem(), crawlerRequest.getSavePath(), crawlerRequest.getWithChild());
+    @RequestMapping(value = "/product")
+    public String product() throws Exception {
+        logger.info("product controller");
+         mcloudProductCrawService.crawl1();
+        return "请等待";
 
     }
 
