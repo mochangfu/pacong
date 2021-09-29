@@ -1,10 +1,10 @@
 package com.cetc.pacong.spider;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.cetc.pacong.domain.Enterprise;
 import com.cetc.pacong.domain.News;
-import com.cetc.pacong.domain.Product;
 import com.cetc.pacong.utils.Base64Util;
 import com.cetc.pacong.utils.KeySetSingleton;
 import org.jsoup.Connection;
@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
+import us.codecraft.webmagic.model.HttpRequestBody;
 import us.codecraft.webmagic.processor.PageProcessor;
 
 import java.io.BufferedReader;
@@ -29,15 +30,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class McloudEnterpriseResolver implements PageProcessor {
+public class McloudBussEnterpriseResolver implements PageProcessor {
 
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
     private Site site = Site.me().setRetryTimes(3).setSleepTime(2000).setTimeOut(10000);
-    private String permit_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getPermitInfoDetails"  ;  // 许可信息
-    private String filing_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getFilingInfoDetails" ;  // 备案信息
+    private String permit_url = "https://mdcloud.joinchain.cn/api/database/intermediate/getBussLicInfoList"  ;  // 许可信息
+    private String filing_url = "https://mdcloud.joinchain.cn/api/database/intermediate/getBussRecInfoList" ;  // 备案信息
 
     @Override
     public void process(Page page) {
@@ -48,25 +49,43 @@ public class McloudEnterpriseResolver implements PageProcessor {
 
         String text=page.getRawText();
         JSONObject jsonObject0 = JSON.parseObject(text);
-        en.setKey(jsonObject0.getString("id"));
+        en.setKey(jsonObject0.getString("entId"));
         en.setName(jsonObject0.getString("enterpriseName"));
 
         try{
-            Map<String ,String > map=new HashMap<>();
-            map.put("id",en.getKey());
-            String url_0 = permit_url +"?"+ urlencode(map);
+            String id=en.getKey();
+            String enterpriseName=en.getName();
+
+
+            Map<String ,Object > mapBody=new HashMap<>();
+            mapBody.put("entId",id);
+            mapBody.put("enterpriseName",enterpriseName);
+            String url_0=permit_url;
             Connection connection= Jsoup.connect(url_0).ignoreContentType(true);
+            connection.requestBody(JSON.toJSONString(mapBody));
             connection.headers(request.getHeaders());
+            connection.method(Connection.Method.POST);
             Document rootdocument =connection.ignoreContentType(true).get();
             JSONObject jsonObject1 = JSON.parseObject(rootdocument.body().text());
-            en.setLicenseNum(jsonObject1.getString("licenseNum"));
+            JSONArray records=jsonObject1.getJSONArray("records");
+            if(records!=null&&records.size()>0){
+                JSONObject record =records.getJSONObject(0);
+                en.setLicenseNum(record.getString("licenseNum"));
+            }
 
-            url_0 = filing_url +"?"+ urlencode(map);
+            url_0 = filing_url ;
             connection= Jsoup.connect(url_0).ignoreContentType(true);
+            connection.requestBody(JSON.toJSONString(mapBody));
             connection.headers(request.getHeaders());
+            connection.method(Connection.Method.POST);
             rootdocument =connection.ignoreContentType(true).get();
             JSONObject jsonObject2 = JSON.parseObject(rootdocument.body().text());
-            en.setRecordNum(jsonObject2.getString("recordNum"));
+            records=jsonObject1.getJSONArray("records");
+            if(records!=null&&records.size()>0){
+                JSONObject record =records.getJSONObject(0);
+                en.setRecordNum(jsonObject2.getString("recordNum"));
+            }
+
         }catch (Exception e){
             logger.info("爬取工商企业信息错误",e.getMessage(),e);
         }

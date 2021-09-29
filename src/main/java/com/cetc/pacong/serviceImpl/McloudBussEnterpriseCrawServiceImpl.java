@@ -4,10 +4,11 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.cetc.pacong.downloader.CustomHttpClientDownloader;
 import com.cetc.pacong.listener.ResolverListener;
-
+import com.cetc.pacong.pipeline.BussEnterprisePipeline;
 import com.cetc.pacong.pipeline.EnterprisePipeline;
 import com.cetc.pacong.serviceImpl.service.ICrawService;
-
+import com.cetc.pacong.spider.McloudBussEnterpriseResolver;
+import com.cetc.pacong.spider.McloudBussEnterpriseUlrListCrawler;
 import com.cetc.pacong.spider.McloudEnterpriseResolver;
 import com.cetc.pacong.spider.McloudEnterpriseUlrListCrawler;
 import com.cetc.pacong.utils.KeySetSingleton;
@@ -20,10 +21,13 @@ import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Spider;
+import us.codecraft.webmagic.model.HttpRequestBody;
 import us.codecraft.webmagic.scheduler.QueueScheduler;
 import us.codecraft.webmagic.scheduler.Scheduler;
+import us.codecraft.webmagic.utils.HttpConstant;
 
 import java.io.File;
 import java.util.*;
@@ -34,7 +38,7 @@ import java.util.*;
  * 爬取指定百科词条
  */
 @Component
-public class McloudEnterpriseCrawServiceImpl implements ICrawService {
+public class McloudBussEnterpriseCrawServiceImpl implements ICrawService {
 
     private Map<String, Object> context = Maps.newHashMap();
 
@@ -66,7 +70,7 @@ public class McloudEnterpriseCrawServiceImpl implements ICrawService {
         headers.put("User-Agent",userAgent);
         headers.put("Cookie",Cookie);
         headers.put("Authorization",Authorization);
-        spiderResolver = Spider.create(new McloudEnterpriseUlrListCrawler())
+        spiderResolver = Spider.create(new McloudBussEnterpriseUlrListCrawler())
                 .setDownloader(new CustomHttpClientDownloader())
                 .setExitWhenComplete(true)
                 .setScheduler(scheduler1)
@@ -79,10 +83,10 @@ public class McloudEnterpriseCrawServiceImpl implements ICrawService {
                 .setSpiderListeners(Lists.newArrayList(new ResolverListener(savePath, "crawl_failed_url.txt", "crawl_succ_url.txt")))
                 .setExitWhenComplete(true)
                 .thread(1);
-        spiderCrawler = Spider.create(new McloudEnterpriseResolver())
+        spiderCrawler = Spider.create(new McloudBussEnterpriseResolver())
                 .setDownloader(new CustomHttpClientDownloader())
                 .setExitWhenComplete(true)
-                .addPipeline(new EnterprisePipeline(savePath, "crawled_data.txt"))
+                .addPipeline(new BussEnterprisePipeline(savePath, "crawled_data.txt"))
                 .setScheduler(scheduler)
                 .setSpiderListeners(Lists.newArrayList(new ResolverListener(savePath, "crawl_failed_url.txt", "crawl_succ_url.txt")))
                 .setExitWhenComplete(true)
@@ -92,7 +96,7 @@ public class McloudEnterpriseCrawServiceImpl implements ICrawService {
 
     public static void main(String[] args) throws Exception {
 
-        new McloudEnterpriseCrawServiceImpl().crawl1();
+        new McloudBussEnterpriseCrawServiceImpl().crawl1();
 
     }
     public String crawl1()  {
@@ -101,13 +105,13 @@ public class McloudEnterpriseCrawServiceImpl implements ICrawService {
 
         String Cookie = "deviceId=4c1932cf; mh_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzeXN0ZW1JZCI6IjEwMCIsImdyYW50X3R5cGUiOm51bGwsInVzZXJfbmFtZSI6Inh4MTQzMzY2NTYyODQzNzMxNTU4NSIsInNjb3BlIjpbIjEwMCJdLCJpZCI6IjE0MzM2NjU2Mjg4NDgzNTczNzgiLCJleHAiOjE2MzI4OTM3MDksImxvZ2luTm8iOiI5OWE5NmUxZTVhOTg0YjBkYWQzYTJkYTUwNzE2N2Y2YSIsImF1dGhvcml0aWVzIjpbIjEwMDEwMDEiXSwianRpIjoiYzhlNTRlYjAtZTlhMy00NDQ0LTkxZTgtMDIwZTAyNTBjN2QwIiwiY2xpZW50X2lkIjoibWhXZWIifQ.nApZDrPAJOHy8-0N2i1i7DA0XccGygEzgNkzVH6OwqE; mh_refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzeXN0ZW1JZCI6IjEwMCIsImdyYW50X3R5cGUiOm51bGwsInVzZXJfbmFtZSI6Inh4MTQzMzY2NTYyODQzNzMxNTU4NSIsInNjb3BlIjpbIjEwMCJdLCJhdGkiOiJjOGU1NGViMC1lOWEzLTQ0NDQtOTFlOC0wMjBlMDI1MGM3ZDAiLCJpZCI6IjE0MzM2NjU2Mjg4NDgzNTczNzgiLCJleHAiOjE2MzI4OTUzOTEsImxvZ2luTm8iOiI5OWE5NmUxZTVhOTg0YjBkYWQzYTJkYTUwNzE2N2Y2YSIsImF1dGhvcml0aWVzIjpbIjEwMDEwMDEiXSwianRpIjoiMmExY2I2YjAtNWRmNS00NzkwLTkwODAtZTY0ZWZkMDZjZDFlIiwiY2xpZW50X2lkIjoibWhXZWIifQ.gj_MGqKtvNsLaXYilZHMaPfMLMFhYiQd58V0I5Fvxhk; mh_expires_in=1632893709.295";
         String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36";
-        String Authorization="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzeXN0ZW1JZCI6IjEwMCIsImdyYW50X3R5cGUiOm51bGwsInVzZXJfbmFtZSI6Inh4MTQzMzY2NTYyODQzNzMxNTU4NSIsInNjb3BlIjpbIjEwMCJdLCJpZCI6IjE0MzM2NjU2Mjg4NDgzNTczNzgiLCJleHAiOjE2MzI4ODY2MjcsImxvZ2luTm8iOiI5OWE5NmUxZTVhOTg0YjBkYWQzYTJkYTUwNzE2N2Y2YSIsImF1dGhvcml0aWVzIjpbIjEwMDEwMDEiXSwianRpIjoiYjc5ODRlMGUtMGZhMC00ZjgzLThiM2UtOWRkNjNhY2JkMjhjIiwiY2xpZW50X2lkIjoibWhXZWIifQ.Fp893Upc-ByXCZZSZNWjeTsIJTqT_nfQF4Gnak1YeFM";
+        String Authorization="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzeXN0ZW1JZCI6IjEwMCIsImdyYW50X3R5cGUiOm51bGwsInVzZXJfbmFtZSI6Inh4MTQzMzY2NTYyODQzNzMxNTU4NSIsInNjb3BlIjpbIjEwMCJdLCJpZCI6IjE0MzM2NjU2Mjg4NDgzNTczNzgiLCJleHAiOjE2MzI4OTM3MDksImxvZ2luTm8iOiI5OWE5NmUxZTVhOTg0YjBkYWQzYTJkYTUwNzE2N2Y2YSIsImF1dGhvcml0aWVzIjpbIjEwMDEwMDEiXSwianRpIjoiYzhlNTRlYjAtZTlhMy00NDQ0LTkxZTgtMDIwZTAyNTBjN2QwIiwiY2xpZW50X2lkIjoibWhXZWIifQ.nApZDrPAJOHy8-0N2i1i7DA0XccGygEzgNkzVH6OwqE";
         headers.put("User-Agent",userAgent);
         headers.put("Cookie",Cookie);
         headers.put("Authorization",Authorization);
-        String savePath = "D:/yiliaoPacongData/Enterprise/";
+        String savePath = "D:/yiliaoPacongData/BussEnterprise/";
         String time = DateFormatUtils.format(new Date(), "yyyyMMddHHmmssSSS");
-        savePath = savePath + "Enterprise_" + time + "/";
+        savePath = savePath + "BussEnterprise_" + time + "/";
         File fileTxt = new File(savePath + "txt/");
         File fileimage = new File(savePath + "image/");
         //如果文件夹不存在则创建
@@ -175,7 +179,7 @@ public class McloudEnterpriseCrawServiceImpl implements ICrawService {
     /*    List<String> provinces=Arrays.asList(   "北京市","辽宁省", "河北省", "吉林省", "黑龙江省", "江苏省", "浙江省", "安徽省", "福建省", "江西省", "山东省",
                 "河南省", "湖北省", "湖南省", "广东省", "广西壮族自治区", "海南省", "四川省", "贵州省", "云南省", "西藏自治区", "陕西省",
                 "甘肃省", "山西省", "青海省", "宁夏回族自治区", "新疆维吾尔自治区", "香港特别行政区", "澳门特别行政区", "台湾", "内蒙古自治区");*/
-        String base_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getEnterpriseRelationList";
+        String base_url = "https://mdcloud.joinchain.cn/api/database/intermediate/getEntBusinessList?resourceId=702175b94d1e45f09e11593727b79718&pageIndex=1&pageSize=10";
         Integer count =0;
 
             for (String province : provinces) {
@@ -186,20 +190,23 @@ public class McloudEnterpriseCrawServiceImpl implements ICrawService {
                 map.put("province",province);
                 map.put("pageSize",page_size.toString());
                 map.put("pageIndex","1");
+
                 // map.put("city",)
-                String url_0 = base_url +"?"+ urlencode(map);
+                String url_0 = base_url +"&"+ urlencode(map);
                 try{
                     Connection connection= Jsoup.connect(url_0).ignoreContentType(true);
                     System.out.println(url_0);
-                    connection.headers(map);
+                    connection.headers(headers);
                     Document rootdocument =connection.ignoreContentType(true).get();
                     JSONObject jsonObject = JSON.parseObject(rootdocument.body().text());
-                    Integer pages =(Integer)jsonObject.get("pages");
+                    Integer pages =(Integer)jsonObject.get("total");
                     for (int j = start_page; j <pages; j++) {
                         map.put("pageIndex",j+"");
                         url_0 =base_url + "?"+urlencode(map);
                         Request request = new Request(url_0);
                         request.getHeaders().putAll(headers);
+                        request.setMethod(HttpConstant.Method.POST);
+
                         scheduler1.push(request,spiderResolver);
                     }
                 }catch (Exception e){
