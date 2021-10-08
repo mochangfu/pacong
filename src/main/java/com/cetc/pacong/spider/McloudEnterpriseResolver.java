@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.cetc.pacong.domain.Enterprise;
 import com.cetc.pacong.domain.News;
-import com.cetc.pacong.domain.Product;
 import com.cetc.pacong.utils.Base64Util;
 import com.cetc.pacong.utils.KeySetSingleton;
 import org.jsoup.Connection;

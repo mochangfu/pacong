@@ -24,9 +24,9 @@ import java.util.List;
 public class McloudProductUlrListCrawler implements PageProcessor {
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(2000).setTimeOut(10000);
+    private Site site = Site.me().setRetryTimes(3).setSleepTime(5000).setTimeOut(10000);
 
-    String detail_url = "https://mdcloud.joinchain.cn/api/search/product/getProductList";
+    String detail_url = "https://mdcloud.joinchain.cn/api/database/product/getProductDetails";
 
     @Override
     public void process(Page page) {
@@ -47,11 +47,6 @@ public class McloudProductUlrListCrawler implements PageProcessor {
             reqList.add(req);
         }
         page.putField("requests", reqList);
-
-        try {
-            Thread.currentThread().sleep(3000);
-        }catch (Exception e){
-        }
     }
 
 

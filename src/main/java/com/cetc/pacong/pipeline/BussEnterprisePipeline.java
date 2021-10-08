@@ -2,7 +2,7 @@
 package com.cetc.pacong.pipeline;
 
 import com.alibaba.fastjson.JSON;
-import com.cetc.pacong.domain.Product;
+import com.cetc.pacong.domain.BussEnterprise;
 import com.cetc.pacong.utils.FileUtil;
 import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
@@ -37,14 +37,14 @@ public class BussEnterprisePipeline extends FilePersistentBase implements Pipeli
         if (resultItems.get("resultItems") == null) {
             return;
         }
-        Product news = resultItems.get("resultItems");
+        BussEnterprise news = resultItems.get("resultItems");
 
         //TODO download  img
 
         write(news);
 
     }
-    public void write(Product news) {
+    public void write(BussEnterprise news) {
         //TODO  write jsonDOC
         String jsonDoc =  JSON.toJSONString(news);
         FileUtil.list2txt(Lists.newArrayList(jsonDoc), txtFile.getAbsolutePath());

@@ -23,17 +23,18 @@ import java.util.Map;
 public class McloudBussEnterpriseUlrListCrawler implements PageProcessor {
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(2000).setTimeOut(10000);
+    private Site site = Site.me().setRetryTimes(2).setSleepTime(5000).setTimeOut(30000);
     String detail_url = "https://mdcloud.joinchain.cn/api/database/intermediate/getEntBusinessDetails";//  # 工商信息
    // String detail_url = "https://mdcloud.joinchain.cn/api/database/enterprise/getBaseEnterpriseDetails";
     @Override
     public void process(Page page) {
+
         List<Request>  reqList = Lists.newArrayList();
         String text=page.getRawText();
         Request request = page.getRequest();
 
         JSONObject jsonObject = JSON.parseObject(text);
-        JSONArray records=jsonObject.getJSONArray("records");
+        JSONArray records=jsonObject.getJSONArray("rows");
 
         for (Object record : records) {
             String id= ((JSONObject)record).getString("entId");
@@ -43,17 +44,14 @@ public class McloudBussEnterpriseUlrListCrawler implements PageProcessor {
             Map<String ,Object > mapBody=new HashMap<>();
             mapBody.put("entId",id);
             mapBody.put("enterpriseName",enterpriseName);
-            request.setRequestBody(HttpRequestBody.form(mapBody,"utf-8"));
-            request.setMethod(HttpConstant.Method.POST);
+            req.setRequestBody(HttpRequestBody.form(mapBody,"utf-8"));
+            req.setMethod(HttpConstant.Method.POST);
             req.getHeaders().putAll(request.getHeaders());
             reqList.add(req);
         }
         page.putField("requests", reqList);
+        logger.info("间隔5秒");
 
-        try {
-            Thread.currentThread().sleep(3000);
-        }catch (Exception e){
-        }
     }
 
 

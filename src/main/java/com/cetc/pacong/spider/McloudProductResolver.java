@@ -1,15 +1,11 @@
 package com.cetc.pacong.spider;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.cetc.pacong.domain.BaiduBaikeDoc;
 import com.cetc.pacong.domain.News;
 import com.cetc.pacong.domain.Product;
 import com.cetc.pacong.utils.Base64Util;
 import com.cetc.pacong.utils.KeySetSingleton;
-import com.google.common.collect.Lists;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
@@ -18,7 +14,6 @@ import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.processor.PageProcessor;
-import us.codecraft.webmagic.selector.Html;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,7 +21,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -36,33 +32,69 @@ public class McloudProductResolver implements PageProcessor {
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(2000).setTimeOut(10000);
+    private Site site = Site.me().setRetryTimes(3).setSleepTime(5000).setTimeOut(10000);
 
+    public List<Product> list=new ArrayList<>();
 
     @Override
     public void process(Page page) {
 
         Request request = page.getRequest();
         Product product = new Product();
-        product.setDocId(Base64Util.encodeURLSafeString(request.getUrl()));
 
         String text=page.getRawText();
         JSONObject jsonObject = JSON.parseObject(text);
-
-        product.setName(jsonObject.getString("enterpriseName"));
-
+        System.out.println(jsonObject);
+        product.docId = Base64Util.encodeURLSafeString(request.getUrl());//url生成编码
+        product.key = jsonObject.getString("proId");//网站的唯一id
+        product.url = request.getUrl();//网页url
+        product.source=jsonObject.getString("");
+        product.loadTime=new Date();
+        product.attachment=null;
+        product.update_time=null;
+        product.status_cd=1;
+        product.batch="";
+        product.registrationNumber = jsonObject.getString("registNum");////注册证编码
+        product.entName=jsonObject.getString("enterpriseName");//注册人名称
+        product.addressOfRegistrant=jsonObject.getString("registrarAddress");;//
+        product.entId=jsonObject.getString("proId");;//企业id
+        product.productionAddress=jsonObject.getString("productionAddress");;//生产地址
+        product.category=jsonObject.getString("category");;//管理类别
+        product.modelAndSpecification=jsonObject.getString("modelSpeci");;//型号规格
+        product.sampleName=jsonObject.getString("sampleName");;//品名举例
+        product.structureAndComposition=jsonObject.getString("structure");;//结构及组成 / 主要组成部分
+        product.scopeOfApplication=jsonObject.getString("applyRange");;//适用范围 / 预期用途
+        product.approvalDate=jsonObject.getString("approvalDate");;//批准日期
+        product.approvalDepartment=jsonObject.getString("approvalDepart");;//审批部门
+        product.remarks=jsonObject.getString("");;//备注
+        product.validity=jsonObject.getString("validDate");;//有效期至
+        product.status=jsonObject.getString("status");;//状态
+        product.name=jsonObject.getString("productName");;//器械名称
+        product.productType=jsonObject.getString("productType");;//是否进口
+        product.province=jsonObject.getString("province");;//注册地区
+        product.year=jsonObject.getString("year");//注册年份
+        product.twoProdCategory=jsonObject.getString("twoProdCategory");
+        product.zeroProductCategory=jsonObject.getString("zeroProductCategory");
+        product.oneProdCategory=jsonObject.getString("oneProdCategory");
+        product.registType=jsonObject.getString("registType");
 
         Map<String,String> map = KeySetSingleton.getInstance().getUrlKeyMapNew();
         map.put(request.getUrl(),request.getUrl());
         page.putField("productItems", product);
-        logger.info("下载数量："+map.keySet().size());
-       try {
-       Thread.currentThread().sleep(4000);
-
-        }catch (Exception e){
+        list.add(product);
+        synchronized (list){
+            if(list.size()==3){
+                try {
+                    list.notifyAll();
+                    logger.info("wait(0);");
+                    list.wait();
+                }catch (Exception e){
+                    logger.info("wait(1);");
+                }
+            }
         }
 
-////////////////////
+        logger.info("下载数量："+map.keySet().size());
 
     }
 

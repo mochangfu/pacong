@@ -1,16 +1,14 @@
 package com.cetc.pacong.serviceImpl;
 
-import com.alibaba.druid.support.json.JSONUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.cetc.pacong.dao.ProductDao;
 import com.cetc.pacong.downloader.CustomHttpClientDownloader;
 import com.cetc.pacong.listener.ResolverListener;
 import com.cetc.pacong.pipeline.ProductPipeline;
 import com.cetc.pacong.serviceImpl.service.ICrawService;
 import com.cetc.pacong.spider.McloudProductResolver;
 import com.cetc.pacong.spider.McloudProductUlrListCrawler;
-import com.cetc.pacong.spider.QianlunUrlListCrawler;
-import com.cetc.pacong.spider.QianlunResolver;
 import com.cetc.pacong.utils.KeySetSingleton;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -20,6 +18,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Spider;
@@ -39,7 +38,7 @@ public class McloudProductCrawServiceImpl implements ICrawService {
 
     private Map<String, Object> context = Maps.newHashMap();
 
-    private Scheduler scheduler = new QueueScheduler();
+    private Scheduler scheduler0 = new QueueScheduler();
     private Scheduler scheduler1 = new QueueScheduler();
     private Spider spiderResolver;//html子链接解析
     private Spider spiderCrawler;//爬取html内容
@@ -58,54 +57,35 @@ public class McloudProductCrawServiceImpl implements ICrawService {
 
     }
 
+    McloudProductResolver mcloudProductResolver=new McloudProductResolver();
     public void init(String savePath) {
-        Map<String,String>headers =new HashMap<>();
-
-        String Cookie = "deviceId=4c1932cf; mh_access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzeXN0ZW1JZCI6IjEwMCIsImdyYW50X3R5cGUiOiJpbWFnZV9jb2RlIiwidXNlcl9uYW1lIjoieHgxNDMzNjY1NjI4NDM3MzE1NTg1Iiwic2NvcGUiOlsiMTAwIl0sImlkIjoiMTQzMzY2NTYyODg0ODM1NzM3OCIsImV4cCI6MTYzMjc2Njc5NSwibG9naW5ObyI6IjVmZGRmMmZlODk0ZTRjODk4YjIzYzFiNDc1MWNmYTVmIiwiYXV0aG9yaXRpZXMiOlsiMTAwMTAwMSJdLCJqdGkiOiJhMWIwMjQ3OS1kNGEzLTQ4ZGMtYThmNi1mYTQzZmFjZGRkN2QiLCJjbGllbnRfaWQiOiJtaFdlYiJ9.qbSNNgXwZXDJmHb3lGJEffDDUSjV83DS-iM3gy9T_RI; mh_refresh_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzeXN0ZW1JZCI6IjEwMCIsImdyYW50X3R5cGUiOiJpbWFnZV9jb2RlIiwidXNlcl9uYW1lIjoieHgxNDMzNjY1NjI4NDM3MzE1NTg1Iiwic2NvcGUiOlsiMTAwIl0sImF0aSI6ImExYjAyNDc5LWQ0YTMtNDhkYy1hOGY2LWZhNDNmYWNkZGQ3ZCIsImlkIjoiMTQzMzY2NTYyODg0ODM1NzM3OCIsImV4cCI6MTYzMjg0NTk5NSwibG9naW5ObyI6IjVmZGRmMmZlODk0ZTRjODk4YjIzYzFiNDc1MWNmYTVmIiwiYXV0aG9yaXRpZXMiOlsiMTAwMTAwMSJdLCJqdGkiOiI0YTRlMTA2OC1hNGMyLTRkMWItODczYS1kMzlkNTgwYmM5MDkiLCJjbGllbnRfaWQiOiJtaFdlYiJ9.hIS28MTrpydwVZpJrep20pKe_q-iznOEJuTqtYfVRuY; mh_expires_in=1632766795.351";
-        String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36";
-        String Authorization="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzeXN0ZW1JZCI6IjEwMCIsImdyYW50X3R5cGUiOiJpbWFnZV9jb2RlIiwidXNlcl9uYW1lIjoieHgxNDMzNjY1NjI4NDM3MzE1NTg1Iiwic2NvcGUiOlsiMTAwIl0sImlkIjoiMTQzMzY2NTYyODg0ODM1NzM3OCIsImV4cCI6MTYzMjc2Njc5NSwibG9naW5ObyI6IjVmZGRmMmZlODk0ZTRjODk4YjIzYzFiNDc1MWNmYTVmIiwiYXV0aG9yaXRpZXMiOlsiMTAwMTAwMSJdLCJqdGkiOiJhMWIwMjQ3OS1kNGEzLTQ4ZGMtYThmNi1mYTQzZmFjZGRkN2QiLCJjbGllbnRfaWQiOiJtaFdlYiJ9.qbSNNgXwZXDJmHb3lGJEffDDUSjV83DS-iM3gy9T_RI";
-        headers.put("User-Agent",userAgent);
-        headers.put("Cookie",Cookie);
-        headers.put("Authorization",Authorization);
         spiderResolver = Spider.create(new McloudProductUlrListCrawler())
                 .setDownloader(new CustomHttpClientDownloader())
-                .setExitWhenComplete(true)
-                .setScheduler(scheduler1)
+                .setScheduler(scheduler0)
                 .addPipeline((resultItems, task) -> {
                     List<Request> toCrawRequests = resultItems.get("requests");
                     toCrawRequests.forEach(r -> {
-                        scheduler.push(r, spiderCrawler);
+                        scheduler1.push(r, spiderCrawler);
                     });
                 })
                 .setSpiderListeners(Lists.newArrayList(new ResolverListener(savePath, "crawl_failed_url.txt", "crawl_succ_url.txt")))
-                .setExitWhenComplete(true)
                 .thread(1);
-        spiderCrawler = Spider.create(new McloudProductResolver())
+
+        spiderCrawler = Spider.create(mcloudProductResolver)
                 .setDownloader(new CustomHttpClientDownloader())
-                .setExitWhenComplete(true)
                 .addPipeline(new ProductPipeline(savePath, "crawled_data.txt"))
-                .setScheduler(scheduler)
+                .setScheduler(scheduler1)
                 .setSpiderListeners(Lists.newArrayList(new ResolverListener(savePath, "crawl_failed_url.txt", "crawl_succ_url.txt")))
-                .setExitWhenComplete(true)
                 .thread(1);
 
     }
 
     public static void main(String[] args) throws Exception {
-
         new McloudProductCrawServiceImpl().crawl1();
-
     }
     public String crawl1()  {
 
-        Map<String,String>headers =new HashMap<>();
-
-        String Cookie = "mh_access_token=; mh_refresh_token=; mh_expires_in=; deviceId=4c1932cf";
-        String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36";
-        String Authorization="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzeXN0ZW1JZCI6IjEwMCIsImdyYW50X3R5cGUiOiJpbWFnZV9jb2RlIiwidXNlcl9uYW1lIjoieHgxNDMzNjY1NjI4NDM3MzE1NTg1Iiwic2NvcGUiOlsiMTAwIl0sImlkIjoiMTQzMzY2NTYyODg0ODM1NzM3OCIsImV4cCI6MTYzMjc2Njc5NSwibG9naW5ObyI6IjVmZGRmMmZlODk0ZTRjODk4YjIzYzFiNDc1MWNmYTVmIiwiYXV0aG9yaXRpZXMiOlsiMTAwMTAwMSJdLCJqdGkiOiJhMWIwMjQ3OS1kNGEzLTQ4ZGMtYThmNi1mYTQzZmFjZGRkN2QiLCJjbGllbnRfaWQiOiJtaFdlYiJ9.qbSNNgXwZXDJmHb3lGJEffDDUSjV83DS-iM3gy9T_RI";
-        headers.put("User-Agent",userAgent);
-        headers.put("Cookie",Cookie);
-        //headers.put("Authorization",Authorization);
+        Map<String,String>headers = HeadersParm.getHeaders();
         String savePath = "D:/yiliaoPacongData/product/";
         String time = DateFormatUtils.format(new Date(), "yyyyMMddHHmmssSSS");
         savePath = savePath + "product_" + time + "/";
@@ -116,9 +96,9 @@ public class McloudProductCrawServiceImpl implements ICrawService {
             fileTxt.mkdirs();
             fileimage.mkdirs();
         }
+
         init( savePath);
         collect2Resovle2Save1(headers);
-
         return "";
     }
     String urlencode(Map<String,String> paramap){
@@ -137,17 +117,23 @@ public class McloudProductCrawServiceImpl implements ICrawService {
                     initUrls(headers);
                 }
             }).start();
-            Thread.currentThread().sleep(5000);
+            Thread.currentThread().sleep(10000);
             spiderResolver.runAsync();
             Thread.currentThread().sleep(10000);
             spiderCrawler.runAsync();
-            Thread.currentThread().sleep(3000);
+            Thread.currentThread().sleep(10000);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    insertProducts();
+                }
+            }).start();
         } catch (Exception e) {
-            System.out.println("异常");
+            logger.info("异常",e,e.getMessage());
         }
-        int i = 0;
-        while (!Spider.Status.Stopped.equals(spiderCrawler.getStatus()) || !Spider.Status.Stopped.equals(spiderResolver.getStatus())) {
 
+        int i = 0;
+        /*while (!Spider.Status.Stopped.equals(spiderCrawler.getStatus()) || !Spider.Status.Stopped.equals(spiderResolver.getStatus())) {
             try {
                 Thread.currentThread().sleep(10000);
                 i++;
@@ -155,7 +141,7 @@ public class McloudProductCrawServiceImpl implements ICrawService {
             } catch (Exception e) {
                 System.out.println("异常");
             }
-        }
+        }*/
         System.out.println("结束");
         KeySetSingleton.getInstance().setUrlKeyMapNew(new HashMap<>());
     }
@@ -168,6 +154,8 @@ public class McloudProductCrawServiceImpl implements ICrawService {
     String url0 = "http://xiazai.lunwenfw.com/search?q=";
 
 
+    @Autowired
+    private ProductDao productDao;
     public void initUrls(Map<String,String> headers) {
         // 控制页数
         Integer page_size = 10;
@@ -201,20 +189,42 @@ public class McloudProductCrawServiceImpl implements ICrawService {
                         url_0 =base_url + "?"+urlencode(map);
                         Request request = new Request(url_0);
                         request.getHeaders().putAll(headers);
-                        scheduler1.push(request,spiderResolver);
+                        scheduler0.push(request,spiderResolver);
                     }
                 }catch (Exception e){
                     logger.info(url_0,e.getMessage(),e);
                 }
                 try {
-                    Thread.currentThread().sleep(3000);
+                    Thread.sleep(20000);
                 } catch (Exception e) {
-                    System.out.println("异常");
+                  logger.info("异常",e.getMessage(),e);
                 }
             }
         }
         logger.info("等待------");
     }
+
+    public void insertProducts() {
+
+        while (true){
+            synchronized (mcloudProductResolver.list){
+                if(mcloudProductResolver.list.size()<3){
+                    try {
+                        mcloudProductResolver.list.wait();
+                    }catch (Exception e){
+                        logger.info("异常();");
+                    }
+                }
+                productDao.addItems(mcloudProductResolver.list);
+                mcloudProductResolver.list.clear();
+                logger.info("完成插入();");
+                mcloudProductResolver.list.notifyAll();
+            }
+
+
+        }
+}
+
 
     @Override
     public Object getContext(String key) {

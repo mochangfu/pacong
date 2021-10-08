@@ -9,6 +9,7 @@ import com.cetc.pacong.utils.FileUtil;
 import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.ResultItems;
 import us.codecraft.webmagic.Task;
 import us.codecraft.webmagic.pipeline.Pipeline;
@@ -22,6 +23,7 @@ import java.util.Set;
 /**
  * created on 20/8/1.
  */
+
 public class ProductPipeline extends FilePersistentBase implements Pipeline {
     private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -31,6 +33,7 @@ public class ProductPipeline extends FilePersistentBase implements Pipeline {
         setPath(path+"image/");
         txtFile = getFile(path+"txt/"+ txtFileName);
     }
+
     /**
      * Process extracted results.
      *
@@ -42,11 +45,11 @@ public class ProductPipeline extends FilePersistentBase implements Pipeline {
         if (resultItems.get("productItems") == null) {
             return;
         }
-        Product news = resultItems.get("productItems");
+        Product product = resultItems.get("productItems");
 
         //TODO download  img
 
-        write(news);
+        write(product);
 
     }
 

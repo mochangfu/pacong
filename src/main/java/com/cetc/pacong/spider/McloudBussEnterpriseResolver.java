@@ -3,6 +3,7 @@ package com.cetc.pacong.spider;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.cetc.pacong.domain.BussEnterprise;
 import com.cetc.pacong.domain.Enterprise;
 import com.cetc.pacong.domain.News;
 import com.cetc.pacong.utils.Base64Util;
@@ -36,15 +37,15 @@ public class McloudBussEnterpriseResolver implements PageProcessor {
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(2000).setTimeOut(10000);
+    private Site site = Site.me().setRetryTimes(3).setSleepTime(5000).setTimeOut(10000);
     private String permit_url = "https://mdcloud.joinchain.cn/api/database/intermediate/getBussLicInfoList"  ;  // 许可信息
     private String filing_url = "https://mdcloud.joinchain.cn/api/database/intermediate/getBussRecInfoList" ;  // 备案信息
 
     @Override
     public void process(Page page) {
-
+        logger.info("间隔5s-McloudBussEnterpriseResolver");
         Request request = page.getRequest();
-        Enterprise en = new Enterprise();
+        BussEnterprise en = new BussEnterprise();
         en.setDocId(Base64Util.encodeURLSafeString(request.getUrl()));
 
         String text=page.getRawText();
@@ -65,7 +66,7 @@ public class McloudBussEnterpriseResolver implements PageProcessor {
             connection.requestBody(JSON.toJSONString(mapBody));
             connection.headers(request.getHeaders());
             connection.method(Connection.Method.POST);
-            Document rootdocument =connection.ignoreContentType(true).get();
+            Document rootdocument =connection.ignoreContentType(true).post();
             JSONObject jsonObject1 = JSON.parseObject(rootdocument.body().text());
             JSONArray records=jsonObject1.getJSONArray("records");
             if(records!=null&&records.size()>0){
@@ -78,7 +79,7 @@ public class McloudBussEnterpriseResolver implements PageProcessor {
             connection.requestBody(JSON.toJSONString(mapBody));
             connection.headers(request.getHeaders());
             connection.method(Connection.Method.POST);
-            rootdocument =connection.ignoreContentType(true).get();
+            rootdocument =connection.ignoreContentType(true).post();
             JSONObject jsonObject2 = JSON.parseObject(rootdocument.body().text());
             records=jsonObject1.getJSONArray("records");
             if(records!=null&&records.size()>0){
@@ -95,11 +96,11 @@ public class McloudBussEnterpriseResolver implements PageProcessor {
         keyMapNew.put(request.getUrl(),request.getUrl());
         page.putField("resultItems", en);
         logger.info("下载数量："+keyMapNew.keySet().size());
-       try {
+       /*try {
        Thread.currentThread().sleep(3000);
 
         }catch (Exception e){
-        }
+        }*/
 
 ////////////////////
 

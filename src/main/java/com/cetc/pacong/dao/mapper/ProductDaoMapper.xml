@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace = "com.cetc.pacong.dao.ProductDao">
+
+  <insert id="addItem" parameterType="com.cetc.pacong.domain.Product">
+    insert into pc_product
+     (
+registrationNumber,entName,addressOfRegistrant,entId,productionAddress,category,modelAndSpecification,sampleName,structureAndComposition,scopeOfApplication,
+approvalDate,approvalDepartment,remarks,validity,status,name,productType,province,year,zeroProductCategory,
+primaryProductCategory,secondaryProductCategory,loadTime,source,url,attachment,update_time,status_cd,
+     )values
+       #{item.registrationNumber}, #{item.entName}, #{item.addressOfRegistrant}, #{item.entId}, #{item.productionAddress},
+        #{item.category}, #{item.modelAndSpecification}, #{item.sampleName}, #{item.structureAndComposition}, #{item.scopeOfApplication},
+         #{item.approvalDate}, #{item.approvalDepartment}, #{item.remarks}, #{item.validity}, #{item.status}, #{item.name}, #{item.productType},
+         #{item.province}, #{item.year},  #{item.zeroProductCategory},  #{item.oneProdCategory},  #{item.twoProdCategory},  #{item.loadTime},  #{item.source},
+          #{item.url},  #{item.attachment}, update_time, status_cd
+  </insert>
+  <insert id="addItems" parameterType="com.cetc.pacong.domain.Product">
+    insert into pc_product(
+    )
+    <foreach collection="list" item="item" separator=" union all ">
+      select #{item.code},#{item.name},#{item.year},#{item.riqi},
+      #{item.begin},#{item.max},#{item.maxP},#{item.min},#{item.minP},#{item.end},#{item.endP},#{item.gain},#{item.gainP},
+      #{item.turnoverC},#{item.turnoverM},#{item.turnoverP},#{item.waveP}
+    </foreach>
+  </insert>
+</mapper>

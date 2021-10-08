@@ -3,8 +3,7 @@ package com.cetc.pacong.pipeline;
 
 import com.alibaba.fastjson.JSON;
 import com.cetc.pacong.domain.BaiduBaikeDoc;
-import com.cetc.pacong.domain.Product;
-import com.cetc.pacong.utils.DownloadFileUtil;
+import com.cetc.pacong.domain.Enterprise;
 import com.cetc.pacong.utils.FileUtil;
 import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
@@ -42,14 +41,14 @@ public class EnterprisePipeline extends FilePersistentBase implements Pipeline {
         if (resultItems.get("resultItems") == null) {
             return;
         }
-        Product news = resultItems.get("resultItems");
+        Enterprise news = resultItems.get("resultItems");
 
         //TODO download  img
 
         write(news);
 
     }
-    public void write(Product news) {
+    public void write(Enterprise news) {
         //TODO  write jsonDOC
         String jsonDoc =  JSON.toJSONString(news);
         FileUtil.list2txt(Lists.newArrayList(jsonDoc), txtFile.getAbsolutePath());
