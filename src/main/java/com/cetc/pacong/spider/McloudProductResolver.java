@@ -2,14 +2,18 @@ package com.cetc.pacong.spider;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.cetc.pacong.dao.ProductProcessDao;
+import com.cetc.pacong.domain.LocalParms;
 import com.cetc.pacong.domain.News;
 import com.cetc.pacong.domain.Product;
+import com.cetc.pacong.domain.ProductProcess;
 import com.cetc.pacong.utils.Base64Util;
 import com.cetc.pacong.utils.KeySetSingleton;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
@@ -31,11 +35,12 @@ public class McloudProductResolver implements PageProcessor {
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
-
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(5000).setTimeOut(10000);
+    private Site site = Site.me().setRetryTimes(3).setSleepTime(4000).setTimeOut(10000).setCharset("UTF-8");
 
     public List<Product> list=new ArrayList<>();
-
+    public ProductProcessDao productProcessDao;
+    public static String lastItem=null;
+    private static String currentItem="";
     @Override
     public void process(Page page) {
 
@@ -48,12 +53,12 @@ public class McloudProductResolver implements PageProcessor {
         product.docId = Base64Util.encodeURLSafeString(request.getUrl());//url生成编码
         product.key = jsonObject.getString("proId");//网站的唯一id
         product.url = request.getUrl();//网页url
-        product.source=jsonObject.getString("");
+        product.source="joinchain众诚医械";
         product.loadTime=new Date();
         product.attachment=null;
-        product.update_time=null;
+        product.update_time=LocalParms.update_time;
         product.status_cd=1;
-        product.batch="";
+        product.batch=LocalParms.productBatch;
         product.registrationNumber = jsonObject.getString("registNum");////注册证编码
         product.entName=jsonObject.getString("enterpriseName");//注册人名称
         product.addressOfRegistrant=jsonObject.getString("registrarAddress");;//
@@ -61,6 +66,9 @@ public class McloudProductResolver implements PageProcessor {
         product.productionAddress=jsonObject.getString("productionAddress");;//生产地址
         product.category=jsonObject.getString("category");;//管理类别
         product.modelAndSpecification=jsonObject.getString("modelSpeci");;//型号规格
+        if( product.modelAndSpecification!=null&&product.modelAndSpecification.length()>1900) {
+            product.modelAndSpecification = product.modelAndSpecification.substring(0,1900);
+        }
         product.sampleName=jsonObject.getString("sampleName");;//品名举例
         product.structureAndComposition=jsonObject.getString("structure");;//结构及组成 / 主要组成部分
         product.scopeOfApplication=jsonObject.getString("applyRange");;//适用范围 / 预期用途
@@ -74,24 +82,36 @@ public class McloudProductResolver implements PageProcessor {
         product.province=jsonObject.getString("province");;//注册地区
         product.year=jsonObject.getString("year");//注册年份
         product.twoProdCategory=jsonObject.getString("twoProdCategory");
-        product.zeroProductCategory=jsonObject.getString("zeroProductCategory");
+        product.zeroProductCategory=jsonObject.getString("name");
         product.oneProdCategory=jsonObject.getString("oneProdCategory");
         product.registType=jsonObject.getString("registType");
 
         Map<String,String> map = KeySetSingleton.getInstance().getUrlKeyMapNew();
         map.put(request.getUrl(),request.getUrl());
         page.putField("productItems", product);
+        if(LocalParms.idSet.contains(product.getEntId()))return;
         list.add(product);
-        synchronized (list){
-            if(list.size()==3){
+        synchronized (this){
+            if(list.size()== LocalParms.LISTSIZE){
                 try {
-                    list.notifyAll();
-                    logger.info("wait(0);");
-                    list.wait();
+                    this.notifyAll();
+                    //logger.info("wait(0);");
+                    this.wait();
                 }catch (Exception e){
                     logger.info("wait(1);");
                 }
             }
+        }
+        currentItem=(String) request.getExtra("currentItem");
+        if(lastItem==null){
+            lastItem=currentItem;
+        }else if(!lastItem.equals(currentItem)){
+            ProductProcess productProcess=new ProductProcess();
+            productProcess.type="product";
+            productProcess.item =lastItem;
+            productProcess.batch="";
+            productProcessDao.addItem(productProcess);
+            lastItem=(String) request.getExtra("currentItem");
         }
 
         logger.info("下载数量："+map.keySet().size());

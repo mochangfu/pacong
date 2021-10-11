@@ -26,14 +26,6 @@ import java.util.Set;
 
 public class ProductPipeline extends FilePersistentBase implements Pipeline {
     private Logger logger = LoggerFactory.getLogger(getClass());
-
-    private File txtFile;
-
-    public ProductPipeline(String path, String txtFileName) {
-        setPath(path+"image/");
-        txtFile = getFile(path+"txt/"+ txtFileName);
-    }
-
     /**
      * Process extracted results.
      *
@@ -42,39 +34,6 @@ public class ProductPipeline extends FilePersistentBase implements Pipeline {
      */
     @Override
     public void process(ResultItems resultItems, Task task) {
-        if (resultItems.get("productItems") == null) {
-            return;
-        }
-        Product product = resultItems.get("productItems");
-
-        //TODO download  img
-
-        write(product);
-
     }
 
-    private void downLoadImg(Set<String> imgUrls, String docId, BaiduBaikeDoc news) {
-        if (imgUrls.isEmpty()) {
-            return;
-        }
-
-
-        //保存图片到文件
-        String fileName=new Date().getTime() +".pdf";
-        try {
-            for (String picUrl : imgUrls) {
-                DownloadFileUtil.downLoadFromUrl(picUrl, fileName, path + docId);
-            }
-            //news.setTitle(news.title);
-            news.setFileName(fileName);
-        } catch (IOException ioException) {
-            logger.error(String.format("download img failed ： %s", ioException));
-        }
-    }
-
-    public void write(Product news) {
-        //TODO  write jsonDOC
-        String jsonDoc =  JSON.toJSONString(news);
-        FileUtil.list2txt(Lists.newArrayList(jsonDoc), txtFile.getAbsolutePath());
-    }
 }

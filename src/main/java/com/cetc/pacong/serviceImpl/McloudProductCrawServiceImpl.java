@@ -3,6 +3,9 @@ package com.cetc.pacong.serviceImpl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.cetc.pacong.dao.ProductDao;
+import com.cetc.pacong.dao.ProductProcessDao;
+import com.cetc.pacong.domain.LocalParms;
+import com.cetc.pacong.domain.Product;
 import com.cetc.pacong.downloader.CustomHttpClientDownloader;
 import com.cetc.pacong.listener.ResolverListener;
 import com.cetc.pacong.pipeline.ProductPipeline;
@@ -12,6 +15,7 @@ import com.cetc.pacong.spider.McloudProductUlrListCrawler;
 import com.cetc.pacong.utils.KeySetSingleton;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -19,6 +23,7 @@ import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Spider;
@@ -27,6 +32,8 @@ import us.codecraft.webmagic.scheduler.Scheduler;
 
 import java.io.File;
 import java.util.*;
+
+import static com.cetc.pacong.domain.LocalParms.LISTSIZE;
 
 
 /**
@@ -38,12 +45,15 @@ public class McloudProductCrawServiceImpl implements ICrawService {
 
     private Map<String, Object> context = Maps.newHashMap();
 
-    private Scheduler scheduler0 = new QueueScheduler();
-    private Scheduler scheduler1 = new QueueScheduler();
-    private Spider spiderResolver;//html子链接解析
-    private Spider spiderCrawler;//爬取html内容
+    private QueueScheduler schedulerUrls = new QueueScheduler();
+    private QueueScheduler scheduleHhtmls = new QueueScheduler();
+    private Spider spiderUrlListResolver;//html子链接解析
+    private Spider spiderHtmlCrawler;//爬取html内容
 
-
+    @Autowired
+    private ProductDao productDao;
+    @Autowired
+    private ProductProcessDao productProcessDao;
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
     //执行这个main方法-爬取 指定主题的的浅论天下 论文
@@ -56,36 +66,42 @@ public class McloudProductCrawServiceImpl implements ICrawService {
     public void crawl(String site, String savePath) {
 
     }
+    McloudProductUlrListCrawler mcloudProductUlrListCrawler=new McloudProductUlrListCrawler();
 
     McloudProductResolver mcloudProductResolver=new McloudProductResolver();
     public void init(String savePath) {
-        spiderResolver = Spider.create(new McloudProductUlrListCrawler())
+        spiderUrlListResolver = Spider.create(mcloudProductUlrListCrawler)
                 .setDownloader(new CustomHttpClientDownloader())
-                .setScheduler(scheduler0)
+                .setScheduler(schedulerUrls)
                 .addPipeline((resultItems, task) -> {
                     List<Request> toCrawRequests = resultItems.get("requests");
                     toCrawRequests.forEach(r -> {
-                        scheduler1.push(r, spiderCrawler);
+                        scheduleHhtmls.push(r, spiderHtmlCrawler);
                     });
-                })
+                }).setExitWhenComplete(false)
                 .setSpiderListeners(Lists.newArrayList(new ResolverListener(savePath, "crawl_failed_url.txt", "crawl_succ_url.txt")))
                 .thread(1);
-
-        spiderCrawler = Spider.create(mcloudProductResolver)
+        mcloudProductResolver.productProcessDao=productProcessDao;
+        spiderHtmlCrawler = Spider.create(mcloudProductResolver)
                 .setDownloader(new CustomHttpClientDownloader())
-                .addPipeline(new ProductPipeline(savePath, "crawled_data.txt"))
-                .setScheduler(scheduler1)
+                .addPipeline(new ProductPipeline())
+                .setScheduler(scheduleHhtmls)
+                .setExitWhenComplete(false)
                 .setSpiderListeners(Lists.newArrayList(new ResolverListener(savePath, "crawl_failed_url.txt", "crawl_succ_url.txt")))
                 .thread(1);
 
     }
-
     public static void main(String[] args) throws Exception {
         new McloudProductCrawServiceImpl().crawl1();
     }
     public String crawl1()  {
-
-        Map<String,String>headers = HeadersParm.getHeaders();
+        if(spiderUrlListResolver!=null)return "";
+        Date date=new Date();
+        //LocalParms.productBatch;
+        LocalParms.update_time= date;
+        Map<String,String>headers =new HashMap<>();;
+        headers.putAll(HeadersParm.getHeaders());
+        headers.remove("Authorization");
         String savePath = "D:/yiliaoPacongData/product/";
         String time = DateFormatUtils.format(new Date(), "yyyyMMddHHmmssSSS");
         savePath = savePath + "product_" + time + "/";
@@ -98,7 +114,7 @@ public class McloudProductCrawServiceImpl implements ICrawService {
         }
 
         init( savePath);
-        collect2Resovle2Save1(headers);
+        collect2Resovle2Save1(headers,  LocalParms.productBatch);
         return "";
     }
     String urlencode(Map<String,String> paramap){
@@ -109,19 +125,27 @@ public class McloudProductCrawServiceImpl implements ICrawService {
         };
         return url;
     }
-    public void collect2Resovle2Save1(Map<String,String>headers) {
+    public synchronized void collect2Resovle2Save1(Map<String,String>headers,String batch) {
         try {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    initUrls(headers);
+                    initUrls(headers,batch);
                 }
             }).start();
-            Thread.currentThread().sleep(10000);
-            spiderResolver.runAsync();
-            Thread.currentThread().sleep(10000);
-            spiderCrawler.runAsync();
-            Thread.currentThread().sleep(10000);
+
+            wait(5000);
+            spiderUrlListResolver.runAsync();
+            wait(1000);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    notifySpiderUrlListResolver();
+                }
+            }).start();
+            wait(4000);
+            spiderHtmlCrawler.runAsync();
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -133,15 +157,6 @@ public class McloudProductCrawServiceImpl implements ICrawService {
         }
 
         int i = 0;
-        /*while (!Spider.Status.Stopped.equals(spiderCrawler.getStatus()) || !Spider.Status.Stopped.equals(spiderResolver.getStatus())) {
-            try {
-                Thread.currentThread().sleep(10000);
-                i++;
-                System.out.println("正在爬取;循环次数i=" + i);
-            } catch (Exception e) {
-                System.out.println("异常");
-            }
-        }*/
         System.out.println("结束");
         KeySetSingleton.getInstance().setUrlKeyMapNew(new HashMap<>());
     }
@@ -151,31 +166,34 @@ public class McloudProductCrawServiceImpl implements ICrawService {
     public void collect2Resovle2Save() {
     }
 
-    String url0 = "http://xiazai.lunwenfw.com/search?q=";
 
+    /*  @Value("${pacong.product.provinces}")
+      private  String filePath;*/
+    public synchronized void initUrls(Map<String,String> headers,String batch) {
+        LocalParms.idSet=new HashSet<>(productDao.getIdList());
+        List<String> currentItems=productProcessDao.getItems("product",batch);
+        String newItem=null;
 
-    @Autowired
-    private ProductDao productDao;
-    public void initUrls(Map<String,String> headers) {
+        String lastItem =currentItems.size()>0?currentItems.get(currentItems.size()-1):null;
         // 控制页数
         Integer page_size = 10;
         Integer start_page = 1;
-        List<String> provinces=Arrays.asList(   "北京市");
-    /*    List<String> provinces=Arrays.asList(   "北京市","辽宁省", "河北省", "吉林省", "黑龙江省", "江苏省", "浙江省", "安徽省", "福建省", "江西省", "山东省",
+      /*  List<String> provinces=Arrays.asList(   "北京市","辽宁省", "河北省", "吉林省", "黑龙江省", "江苏省","浙江省",  "安徽省", "福建省", "江西省", "山东省",
                 "河南省", "湖北省", "湖南省", "广东省", "广西壮族自治区", "海南省", "四川省", "贵州省", "云南省", "西藏自治区", "陕西省",
                 "甘肃省", "山西省", "青海省", "宁夏回族自治区", "新疆维吾尔自治区", "香港特别行政区", "澳门特别行政区", "台湾", "内蒙古自治区");*/
+        List<String> provinces=Arrays.asList(   "北京市","辽宁省", "河北省", "吉林省", "黑龙江省", "江苏省","浙江省");
         String base_url = "https://mdcloud.joinchain.cn/api/search/product/getProductList";
         Integer count =0;
-        for (int i = 2020; i < 2021; i++) {
+        for (int i = 2021; i> 2000; i--) {
             for (String province : provinces) {
+                if(lastItem!=null&&!lastItem.contains(i + "-" + province))continue;
                 count++;
-                logger.info(count+"页-开始"+i+"年"+province);
+                //   logger.info(count+"开始"+i+"年"+province);
                 Map<String ,String > map=new HashMap<>();
                 map.put("year",String.valueOf(i));
                 map.put("province",province);
                 map.put("pageSize",page_size.toString());
                 map.put("pageIndex","1");
-                // map.put("city",)
                 String url_0 = base_url +"?"+ urlencode(map);
                 try{
                     Connection connection= Jsoup.connect(url_0).ignoreContentType(true);
@@ -184,20 +202,28 @@ public class McloudProductCrawServiceImpl implements ICrawService {
                     Document rootdocument =connection.ignoreContentType(true).get();
                     JSONObject jsonObject = JSON.parseObject(rootdocument.body().text());
                     Integer pages =(Integer)jsonObject.get("pages");
-                    for (int j = start_page; j <pages; j++) {
+                    if(pages==null)pages=1;
+                    for (int j = start_page; j <=pages; j++) {
+
                         map.put("pageIndex",j+"");
                         url_0 =base_url + "?"+urlencode(map);
                         Request request = new Request(url_0);
+                        newItem = i + "-" + province + "-" + j + "";
                         request.getHeaders().putAll(headers);
-                        scheduler0.push(request,spiderResolver);
+                        if(!currentItems.contains(newItem)){
+                            if(McloudProductResolver.lastItem==null)McloudProductResolver.lastItem=newItem;
+                            request.putExtra("currentItem",newItem);
+                            schedulerUrls.push(request, spiderUrlListResolver);
+                        }
+
                     }
                 }catch (Exception e){
                     logger.info(url_0,e.getMessage(),e);
                 }
                 try {
-                    Thread.sleep(20000);
+                    wait(5000);
                 } catch (Exception e) {
-                  logger.info("异常",e.getMessage(),e);
+                    logger.info("异常",e.getMessage(),e);
                 }
             }
         }
@@ -205,26 +231,45 @@ public class McloudProductCrawServiceImpl implements ICrawService {
     }
 
     public void insertProducts() {
-
         while (true){
-            synchronized (mcloudProductResolver.list){
-                if(mcloudProductResolver.list.size()<3){
+            synchronized (mcloudProductResolver){
+                if(mcloudProductResolver.list.size()<LISTSIZE){
                     try {
-                        mcloudProductResolver.list.wait();
+                        mcloudProductResolver.wait();
                     }catch (Exception e){
-                        logger.info("异常();");
+                        logger.info("",e.getMessage(),e);
                     }
                 }
-                productDao.addItems(mcloudProductResolver.list);
+                try{
+                    List<Product> list= new ArrayList<>();list.addAll(mcloudProductResolver.list);
+                    productDao.addItems(list);
+                }catch (Exception e){
+                    logger.info(e.getMessage(),e);
+                }
+
                 mcloudProductResolver.list.clear();
                 logger.info("完成插入();");
-                mcloudProductResolver.list.notifyAll();
+                mcloudProductResolver.notifyAll();
             }
 
 
         }
-}
-
+    }
+    public void notifySpiderUrlListResolver(){
+        while (true){
+            synchronized (mcloudProductUlrListCrawler){
+                try {
+                    mcloudProductUlrListCrawler.wait(1000);
+                    if(scheduleHhtmls.getLeftRequestsCount(spiderHtmlCrawler)<2){
+                        mcloudProductUlrListCrawler.notify();
+                    }
+                }catch (Exception e){
+                    logger.info(" lock.wait();",e.getMessage(),e);
+                }finally {
+                }
+            }
+        }
+    }
 
     @Override
     public Object getContext(String key) {

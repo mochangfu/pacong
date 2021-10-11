@@ -8,6 +8,8 @@ import java.util.List;
 
 @Mapper
 public interface ProductProcessDao {
-    void updateItem(ProductProcess item);
-    String getItem(Integer id);
+    void updateItem(String type,String currentItem);
+    void addItem(ProductProcess item);
+    String getItem(String type);
+    List<String> getItems(String type,String batch);
 }

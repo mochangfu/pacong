@@ -1,6 +1,7 @@
 package com.cetc.pacong.domain;
 
 import lombok.Data;
+import org.apache.xmlbeans.impl.xb.xsdschema.Public;
 
 import java.util.Date;
 
@@ -13,5 +14,9 @@ public class ProductProcess {
 
     public Integer id;//
     public String type;
-    public String currentItem;
+    public String batch;
+    public String item;
+    public String  ip;
+    public Integer sourceId;
+    public String status;
 }

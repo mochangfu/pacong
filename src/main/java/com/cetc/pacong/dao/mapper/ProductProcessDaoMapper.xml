@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace = "com.cetc.pacong.dao.ProductProcess">
+<mapper namespace = "com.cetc.pacong.dao.ProductProcessDao">
 
-  <select id="updateItem" parameterType="com.cetc.pacong.domain.Product">
-    select common_name from kg_device_common_name;
+  <select id="updateItem" parameterType="java.lang.String">
+    update pa_process_record set item=#{item} where type=#{type};
   </select>
-  <select id="getItem" parameterType="com.cetc.pacong.domain.Product">
-    select common_name from kg_device_common_name;
+  <insert id="addItem" parameterType="com.cetc.pacong.domain.ProductProcess">
+    insert into pa_process_record
+     (
+type,sourceId,batch,status,item,ip
+     )values
+       (#{type}, #{sourceId}, #{batch}, #{status}, #{item},#{ip})
+  </insert>
+  <select id="getItem" resultType="java.lang.String">
+    select item from pa_process_record where type=#{type};
+  </select>
+  <select id="getItems" resultType="java.lang.String">
+    select item from pa_process_record where type=#{type};
   </select>
 </mapper>
