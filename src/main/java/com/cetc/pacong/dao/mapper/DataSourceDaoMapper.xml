@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cetc.pacong.dao.DataSourceDao">
+    <resultMap id="dataSourceMap" type="com.cetc.pacong.domain.DataSource">
+        <id property="data_source_id" column="data_source_id" jdbcType="INTEGER"/>
+        <result property="data_source_name" column="data_source_name" jdbcType="VARCHAR"/>
+        <result property="data_source_step" column="data_source_step" jdbcType="INTEGER"/>
+        <result property="data_source_time" column="data_source_time" jdbcType="TIMESTAMP"/>
+        <result property="data_get_time" column="data_get_time" jdbcType="TIMESTAMP"/>
+        <result property="data_amount" column="data_amount" jdbcType="INTEGER"/>
+        <result property="lot_amount" column="lot_amount" jdbcType="INTEGER"/>
+        <result property="lot_num" column="lot_num" jdbcType="VARCHAR"/>
+        <result property="last_lot" column="last_lot" jdbcType="INTEGER"/>
+        <result property="operate_type" column="operate_type" jdbcType="VARCHAR"/>
+        <result property="status_cd" column="status_cd" jdbcType="VARCHAR"/>
+
+    </resultMap>
+
+    <select id="findById" resultMap="dataSourceMap">
+    select  data_source_id, data_source_name, data_source_table, data_source_url, data_source_step, data_source_time, data_get_time,
+    data_amount, lot_amount, lot_num, last_lot, operate_type, status_cd
+     from data_source where data_source_id=#{data_source_id};
+  </select>
+
+    <select id="findByName" resultMap="dataSourceMap">
+    select  data_source_id, data_source_name, data_source_table, data_source_url, data_source_step, data_source_time, data_get_time,
+    data_amount, lot_amount, lot_num, last_lot, operate_type, status_cd
+     from data_source where data_source_name=#{data_source_name};
+  </select>
+
+    <update id="update" parameterType="com.cetc.pacong.domain.DataSource">
+        update pa_batch_record set lot_amount =#{lot_amount},data_amount=#{data_amount} ,
+        data_get_time=#{data_get_time} ,
+        data_source_step=#{data_source_step} ,
+        last_lot=#{last_lot} ,
+         lot_num=#{lot_num}
+where data_source_id =#{data_source_id}
+    </update>
+
+</mapper>

@@ -52,10 +52,7 @@ public class McloudEnterpriseCrawServiceImpl implements ICrawService {
 
 
 
-    @Override
-    public void crawl(String site, String savePath) {
 
-    }
 
     public void init(String savePath) {
         Map<String,String>headers =new HashMap<>();
@@ -160,9 +157,6 @@ public class McloudEnterpriseCrawServiceImpl implements ICrawService {
     }
 
 
-    @Override
-    public void collect2Resovle2Save() {
-    }
 
     String url0 = "http://xiazai.lunwenfw.com/search?q=";
 

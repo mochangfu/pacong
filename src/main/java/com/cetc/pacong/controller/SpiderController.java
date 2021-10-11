@@ -11,10 +11,7 @@ import com.cetc.pacong.serviceImpl.QianlunTianXiaServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/spider")
@@ -41,6 +38,7 @@ public class SpiderController {
         response.success();
         return "请等待";
     }
+
     @RequestMapping(value = "/baikeItem/collect")
     public String getItem1(@RequestBody(required = false) Body crawlerRequest) throws Exception {
         logger.info("baikeItem controller");
@@ -55,10 +53,18 @@ public class SpiderController {
 
     }
 
-    @RequestMapping(value = "/product")
-    public String product() throws Exception {
-        logger.info("product controller");
-         mcloudProductCrawService.crawl1();
+    @RequestMapping(value = "/start")
+    public String product(@RequestParam("code") String code) throws Exception {
+        switch (code){
+            case "medical_product":
+                logger.info("product controller");
+                mcloudProductCrawService.crawl1();
+                break;
+            case "":
+                break;
+            default:
+                break;
+        }
         return "请等待";
 
     }

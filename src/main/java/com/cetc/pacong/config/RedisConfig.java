@@ -32,7 +32,7 @@ public class RedisConfig {
     private String clusterNodes;
 
 
-    @Bean
+   /* @Bean
     public JedisCluster getJedisCluster(){
         String[] cNodes = clusterNodes.split(",");
         HashSet<HostAndPort> nodes = new HashSet<>();
@@ -49,7 +49,7 @@ public class RedisConfig {
         //创建集群对象
         JedisCluster jedisCluster = new JedisCluster(nodes, timeout, jedisPoolConfig);
         return jedisCluster;
-    }
+    }*/
 
 }
 

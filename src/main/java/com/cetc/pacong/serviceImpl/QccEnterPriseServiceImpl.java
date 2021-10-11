@@ -62,12 +62,6 @@ public class QccEnterPriseServiceImpl implements ICrawService {
         new QccEnterPriseServiceImpl().crawl1(savePath);
     }
 
-
-    @Override
-    public void crawl(String site, String savePath) {
-
-    }
-
     private Scheduler scheduler1 = new QueueScheduler();
     public void crawl1(String savePath) throws Exception {
         spiderResolver = Spider.create(new QccResolver())
@@ -93,9 +87,6 @@ public class QccEnterPriseServiceImpl implements ICrawService {
         }
         return;
     }
-
-    @Override
-    public void collect2Resovle2Save() { }
 
     @Override
     public Object getContext(String key) { return context.get(key);

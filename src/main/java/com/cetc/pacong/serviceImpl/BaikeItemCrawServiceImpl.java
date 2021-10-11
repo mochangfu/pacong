@@ -75,10 +75,7 @@ public class BaikeItemCrawServiceImpl implements ICrawService {
         return urls.toArray(new String[0]);
     }
 
-    @Override
-    public void crawl(String site, String savePath) {
 
-    }
 
     /**
      * @param itemKeys  词条列表 "蔡英文,美国总统,神州五号"
@@ -183,9 +180,6 @@ public class BaikeItemCrawServiceImpl implements ICrawService {
     }
 
 
-    public void collect2Resovle2Save() {
-        spider.runAsync();
-    }
 
     public void collectItemResovle2Save() {
         spider.runAsync();

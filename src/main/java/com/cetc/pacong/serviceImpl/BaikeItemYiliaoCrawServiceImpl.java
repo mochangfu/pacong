@@ -49,6 +49,7 @@ public class BaikeItemYiliaoCrawServiceImpl  {
                 .addPipeline(new BaiduYiliaoItem2TxtPipeline(savePath, "crawled_data.txt"))
                 .setSpiderListeners(Lists.newArrayList(new ResolverListener(savePath, "crawl_failed_url.txt", "crawl_succ_url.txt")))
                 .addUrl(getUrls(items))
+                .addUrl(getUrls(items))
                 .setExitWhenComplete(true)
                 .thread(1);
     }

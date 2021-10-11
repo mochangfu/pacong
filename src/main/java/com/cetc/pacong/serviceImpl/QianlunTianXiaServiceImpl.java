@@ -50,10 +50,6 @@ public class QianlunTianXiaServiceImpl implements ICrawService {
     }
 
 
-    @Override
-    public void crawl(String site, String savePath) {
-
-    }
 
     public void init(String word, String savePath, String cookie) {
 
@@ -201,12 +197,7 @@ public class QianlunTianXiaServiceImpl implements ICrawService {
         }
     }
 
-    @Override
-    public void collect2Resovle2Save() {
-        spiderResolver.runAsync();
-        spiderCrawler.runAsync();
 
-    }
 
     String url0 = "http://xiazai.lunwenfw.com/search?q=";
 

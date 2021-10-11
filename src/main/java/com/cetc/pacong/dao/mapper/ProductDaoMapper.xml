@@ -5,11 +5,11 @@
   <insert id="addItem" parameterType="com.cetc.pacong.domain.Product">
     insert into pa_product
      (
-registrationNumber,entName,addressOfRegistrant,entId,productionAddress,category,modelAndSpecification,sampleName,structureAndComposition,scopeOfApplication,
+registrationNumber,entName,addressOfRegistrant,entId,proId,productionAddress,category,modelAndSpecification,sampleName,structureAndComposition,scopeOfApplication,
 approvalDate,approvalDepartment,remarks,validity,status,name,productType,province,year,zeroProductCategory,
 primaryProductCategory,secondaryProductCategory,loadTime,source,url,attachment,update_time,status_cd
      )values
-       #{item.registrationNumber}, #{item.entName}, #{item.addressOfRegistrant}, #{item.entId}, #{item.productionAddress},
+       #{item.registrationNumber}, #{item.entName}, #{item.addressOfRegistrant}, #{item.entId},#{item.key}, #{item.productionAddress},
         #{item.category}, #{item.modelAndSpecification}, #{item.sampleName}, #{item.structureAndComposition}, #{item.scopeOfApplication},
          #{item.approvalDate}, #{item.approvalDepartment}, #{item.remarks}, #{item.validity}, #{item.status}, #{item.name}, #{item.productType},
          #{item.province}, #{item.year},  #{item.zeroProductCategory},  #{item.oneProdCategory},  #{item.twoProdCategory},  #{item.loadTime},  #{item.source},
@@ -17,12 +17,12 @@ primaryProductCategory,secondaryProductCategory,loadTime,source,url,attachment,u
   </insert>
   <insert id="addItems" parameterType="com.cetc.pacong.domain.Product">
     insert into pa_product(
-      registrationNumber,entName,addressOfRegistrant,entId,productionAddress,category,modelAndSpecification,sampleName,structureAndComposition,scopeOfApplication,
+      registrationNumber,entName,addressOfRegistrant,entId,proId,productionAddress,category,modelAndSpecification,sampleName,structureAndComposition,scopeOfApplication,
       approvalDate,approvalDepartment,remarks,validity,status,name,productType,province,year,zeroProductCategory,
       primaryProductCategory,secondaryProductCategory,loadTime,source,url,attachment,update_time,status_cd
     )
     <foreach collection="items" item="item" separator=" union all ">
-      select      #{item.registrationNumber}, #{item.entName}, #{item.addressOfRegistrant}, #{item.entId}, #{item.productionAddress},
+      select      #{item.registrationNumber}, #{item.entName}, #{item.addressOfRegistrant}, #{item.entId}, #{item.key}, #{item.productionAddress},
         #{item.category}, #{item.modelAndSpecification}, #{item.sampleName}, #{item.structureAndComposition}, #{item.scopeOfApplication},
         #{item.approvalDate}, #{item.approvalDepartment}, #{item.remarks}, #{item.validity}, #{item.status}, #{item.name}, #{item.productType},
         #{item.province}, #{item.year},  #{item.zeroProductCategory},  #{item.oneProdCategory},  #{item.twoProdCategory},  #{item.loadTime},  #{item.source},
@@ -30,7 +30,7 @@ primaryProductCategory,secondaryProductCategory,loadTime,source,url,attachment,u
     </foreach>
   </insert>
     <select id="getIdList" resultType="java.lang.String">
-    select entId from pa_product ;
+    select proId from pa_product ;
   </select>
 
 </mapper>

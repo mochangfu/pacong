@@ -16,6 +16,6 @@ type,sourceId,batch,status,item,ip
     select item from pa_process_record where type=#{type};
   </select>
   <select id="getItems" resultType="java.lang.String">
-    select item from pa_process_record where type=#{type};
+    select item from pa_process_record where type=#{type} and batch=#{batch};;
   </select>
 </mapper>

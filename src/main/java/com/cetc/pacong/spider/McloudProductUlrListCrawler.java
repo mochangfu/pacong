@@ -28,42 +28,42 @@ import java.util.List;
 public class McloudProductUlrListCrawler implements PageProcessor {
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(4000).setTimeOut(10000).setCharset("UTF-8");
+    private Site site = Site.me().setRetryTimes(3).setSleepTime(3000).setTimeOut(10000).setCharset("UTF-8");
 
     String detail_url = "https://mdcloud.joinchain.cn/api/database/product/getProductDetails";
 
-    public Boolean waitFlag=false;
+
     @Override
     public void process(Page page) {
-        List<Request>  reqList = Lists.newArrayList();
+        List<Request> reqList = Lists.newArrayList();
 
-        String text=page.getRawText();
+        String text = page.getRawText();
         Request request = page.getRequest();
 
         JSONObject jsonObject = JSON.parseObject(text);
-        JSONArray records=jsonObject.getJSONArray("records");
+        JSONArray records = jsonObject.getJSONArray("records");
 
         for (Object record : records) {
-            String proId= ((JSONObject)record).getString("proId");
-            if(LocalParms.idSet.contains(proId))continue;
-            String url_0=detail_url+"?proId="+proId;
-            Request req=new Request(url_0);
+            String proId = ((JSONObject) record).getString("proId");
+            if (LocalParms.idSet.contains(proId)) continue;
+            String url_0 = detail_url + "?proId=" + proId;
+            Request req = new Request(url_0);
             req.getHeaders().putAll(request.getHeaders());
             req.setMethod(HttpConstant.Method.GET);
-            req.putExtra("currentItem",request.getExtra("currentItem"));
+            req.putExtra("currentItem", request.getExtra("currentItem"));
             reqList.add(req);
         }
         page.putField("requests", reqList);
 
-        synchronized (this){
+        synchronized (this) {
             try {
-                    this.notify();
-                    this.wait();
-            }catch (Exception e){
-                logger.info("",e.getMessage(),e);
+                this.notify();
+                this.wait();
+            } catch (Exception e) {
+                logger.info("", e.getMessage(), e);
             }
         }
-     /*   productProcessDao.updateItem("product",(String) request.getExtra("currentItem"));*/
+
         logger.info(" -------------------------");
 
     }
